@@ -15,9 +15,9 @@ const MemoryCard = ({ memory, onDelete }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-gray-800 flex-1">{memory.title}</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex-1">{memory.title}</h3>
         <div className="flex items-center gap-2 ml-2">
           {memory.similarity && (
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
@@ -46,21 +46,21 @@ const MemoryCard = ({ memory, onDelete }) => {
         </div>
       )}
 
-      <p className={`text-gray-600 mb-3 ${!isExpanded && 'line-clamp-3'}`}>
+      <p className={`text-gray-600 dark:text-gray-300 mb-3 ${!isExpanded && 'line-clamp-3'}`}>
         {memory.text}
       </p>
 
       {memory.text.length > 150 && (
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-blue-500 hover:text-blue-700 text-sm mb-2"
+          className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm mb-2"
         >
           {isExpanded ? 'Show less' : 'Show more'}
         </button>
       )}
 
       {memory.metadata?.context && (
-        <p className="text-sm text-gray-500 italic mb-2">
+        <p className="text-sm text-gray-500 dark:text-gray-400 italic mb-2">
           Note: {memory.metadata.context}
         </p>
       )}
@@ -70,7 +70,7 @@ const MemoryCard = ({ memory, onDelete }) => {
           {memory.tags.map((tag, index) => (
             <span
               key={index}
-              className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+              className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded"
             >
               {tag}
             </span>
@@ -78,12 +78,12 @@ const MemoryCard = ({ memory, onDelete }) => {
         </div>
       )}
 
-      <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-2">
+      <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 border-t dark:border-gray-700 pt-2">
         <a
           href={memory.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500 hover:text-blue-700 truncate max-w-xs"
+          className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate max-w-xs"
         >
           {memory.url}
         </a>
