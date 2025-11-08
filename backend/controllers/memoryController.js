@@ -1,5 +1,7 @@
 import Memory from '../models/Memory.js';
 import { saveBase64Image, deleteImage } from '../utils/imageHelper.js';
+import { generateOpenAIEmbedding, isOpenAIConfigured } from '../services/openaiEmbedding.js';
+import { generateLocalEmbedding, isLocalModelReady } from '../services/localEmbedding.js';
 
 // @desc    Save a new memory
 // @route   POST /api/memories/save
@@ -39,6 +41,12 @@ export const saveMemory = async (req, res) => {
       tags: tags || [],
       imagePath: imagePath, // Store file path instead of base64
     });
+
+    // Generate embedding asynchronously (don't block response)
+    generateEmbeddingForMemory(memory._id, title, text)
+      .catch(err => {
+        console.error('Failed to generate embedding for new memory:', err.message);
+      });
 
     res.status(201).json({
       success: true,
@@ -184,3 +192,46 @@ export const deleteMemory = async (req, res) => {
     });
   }
 };
+
+// Helper function to generate embedding for a memory
+async function generateEmbeddingForMemory(memoryId, title, text) {
+  try {
+    const textToEmbed = `${title}. ${text}`;
+
+    let embedding = null;
+    let embeddingModel = null;
+
+    // Try OpenAI first, then fall back to local
+    if (isOpenAIConfigured()) {
+      try {
+        embedding = await generateOpenAIEmbedding(textToEmbed);
+        embeddingModel = 'openai';
+        console.log(`✅ Generated OpenAI embedding for memory ${memoryId}`);
+      } catch (error) {
+        console.log(`⚠️  OpenAI embedding failed, trying local: ${error.message}`);
+      }
+    }
+
+    // If OpenAI failed or not configured, try local
+    if (!embedding && isLocalModelReady()) {
+      try {
+        embedding = await generateLocalEmbedding(textToEmbed);
+        embeddingModel = 'local';
+        console.log(`✅ Generated local embedding for memory ${memoryId}`);
+      } catch (error) {
+        console.log(`⚠️  Local embedding failed: ${error.message}`);
+      }
+    }
+
+    // Update memory with embedding
+    if (embedding) {
+      await Memory.findByIdAndUpdate(memoryId, {
+        embedding,
+        embeddingModel,
+        embeddingGeneratedAt: new Date(),
+      });
+    }
+  } catch (error) {
+    console.error(`Error generating embedding for memory ${memoryId}:`, error.message);
+  }
+}

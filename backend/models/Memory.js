@@ -32,6 +32,19 @@ const memorySchema = new mongoose.Schema(
       type: String, // Local file path to image (e.g., "/images/1699123456789.jpg")
       default: null,
     },
+    // Semantic Search Fields
+    embedding: {
+      type: [Number], // Vector embedding (384 for local, 1536 for OpenAI)
+      default: null,
+    },
+    embeddingModel: {
+      type: String, // "local" or "openai"
+      default: null,
+    },
+    embeddingGeneratedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields
