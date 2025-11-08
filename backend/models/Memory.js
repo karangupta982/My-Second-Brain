@@ -28,6 +28,10 @@ const memorySchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    imagePath: {
+      type: String, // Local file path to image (e.g., "/images/1699123456789.jpg")
+      default: null,
+    },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt fields
