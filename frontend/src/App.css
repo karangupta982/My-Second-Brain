@@ -1,0 +1,9 @@
+/* Additional custom styles for Project Synapse */
+
+/* Line clamp utility for older browsers */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
