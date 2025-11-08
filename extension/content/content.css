@@ -1,0 +1,44 @@
+/* Notification Styles for Project Synapse */
+
+.synapse-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  max-width: 300px;
+}
+
+.synapse-notification-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.synapse-notification-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.synapse-notification-error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.synapse-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.synapse-notification-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
