@@ -29,6 +29,16 @@ const MemoryCard = ({ memory, onDelete }) => {
         </button>
       </div>
 
+      {(memory.imagePath || memory.imageData) && (
+        <div className="mb-3 rounded-lg overflow-hidden bg-gray-100">
+          <img
+            src={memory.imagePath ? `http://localhost:5000${memory.imagePath}` : memory.imageData}
+            alt={memory.title}
+            className="w-full h-auto max-h-64 object-contain hover:scale-105 transition-transform duration-200"
+          />
+        </div>
+      )}
+
       <p className={`text-gray-600 mb-3 ${!isExpanded && 'line-clamp-3'}`}>
         {memory.text}
       </p>
