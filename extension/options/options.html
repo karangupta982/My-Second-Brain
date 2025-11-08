@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Synapse - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>⚙️ Project Synapse Settings</h1>
+      <p class="subtitle">Configure your second brain</p>
+    </header>
+
+    <div class="content">
+      <!-- Success/Error Messages -->
+      <div id="message" class="message hidden"></div>
+
+      <!-- General Settings -->
+      <section class="section">
+        <h2>🌐 General Settings</h2>
+
+        <div class="setting-group">
+          <label for="api-url">Backend API URL</label>
+          <input
+            type="url"
+            id="api-url"
+            placeholder="http://localhost:5000/api"
+            class="input"
+          >
+          <p class="help-text">The URL of your Synapse backend server</p>
+        </div>
+
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="enable-notifications">
+            <span>Enable notifications</span>
+          </label>
+          <p class="help-text">Show notifications when saving memories</p>
+        </div>
+
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="enable-offline">
+            <span>Enable offline mode</span>
+          </label>
+          <p class="help-text">Save memories locally when offline, sync when online</p>
+        </div>
+
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="auto-tagging">
+            <span>Enable automatic tagging</span>
+          </label>
+          <p class="help-text">Automatically suggest tags based on content</p>
+        </div>
+      </section>
+
+      <!-- Appearance -->
+      <section class="section">
+        <h2>🎨 Appearance</h2>
+
+        <div class="setting-group">
+          <label for="theme">Theme</label>
+          <select id="theme" class="input">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="auto">Auto (System)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Keyboard Shortcuts -->
+      <section class="section">
+        <h2>⌨️ Keyboard Shortcuts</h2>
+
+        <div class="shortcut-info">
+          <div class="shortcut-row">
+            <span class="shortcut-key">Ctrl + Shift + S</span>
+            <span class="shortcut-desc">Save selected text</span>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-key">Ctrl + Shift + N</span>
+            <span class="shortcut-desc">Open quick notes panel</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Management -->
+      <section class="section">
+        <h2>💾 Data Management</h2>
+
+        <div class="setting-group">
+          <label>Local Storage Usage</label>
+          <div class="storage-info">
+            <div class="storage-bar">
+              <div id="storage-used" class="storage-bar-fill"></div>
+            </div>
+            <p id="storage-text" class="help-text">0 memories stored locally</p>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button id="export-btn" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            Export All Data
+          </button>
+
+          <button id="import-btn" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            Import Data
+          </button>
+          <input type="file" id="import-file" accept=".json" style="display: none;">
+
+          <button id="sync-btn" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+            Sync Offline Data
+          </button>
+
+          <button id="clear-cache-btn" class="btn btn-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            Clear Local Cache
+          </button>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="section">
+        <h2>ℹ️ About</h2>
+        <div class="about-info">
+          <p><strong>Version:</strong> 1.0.0</p>
+          <p><strong>Project Synapse</strong> - Your intelligent second brain</p>
+          <p>Capture, store, and rediscover information intelligently</p>
+        </div>
+      </section>
+
+      <!-- Save Button -->
+      <div class="footer-actions">
+        <button id="save-settings-btn" class="btn btn-primary">
+          Save Settings
+        </button>
+        <button id="reset-btn" class="btn btn-secondary">
+          Reset to Defaults
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

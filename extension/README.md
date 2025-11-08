@@ -4,10 +4,21 @@ A Chrome/Edge browser extension for capturing and saving web content to your Pro
 
 ## Features
 
+### Core Features
 - **Context Menu Integration**: Right-click on selected text and save it to Synapse
+- **Image Capture**: Right-click on images to save references
 - **Popup Interface**: View, search, and manage all your saved memories
 - **Real-time Notifications**: Get instant feedback when saving memories
 - **Seamless Integration**: Connects to your local Synapse backend
+
+### New in v2.0 🎉
+- **⌨️ Keyboard Shortcuts**: Save selections with Ctrl+Shift+S
+- **🔌 Offline Mode**: Save memories offline, auto-sync when back online
+- **🏷️ Auto-Tagging**: Automatically suggest tags based on content
+- **📤 Export/Import**: Backup and restore your entire memory collection
+- **⚙️ Settings Page**: Customize backend URL, notifications, themes, and more
+- **📝 Quick Notes Panel**: Fast note-taking with Ctrl+Shift+N
+- **💾 Smart Caching**: Faster loading with intelligent cache management
 
 ## Prerequisites
 
@@ -61,13 +72,23 @@ The extension requires icon files. You have two options:
 
 ## How to Use
 
-### Saving Text from Web Pages
+### Saving Content from Web Pages
 
 1. **Using Context Menu (Right-Click)**
-   - Highlight any text on a webpage
-   - Right-click on the selected text
-   - Click "Save to Synapse" from the context menu
+   - **For Text**: Highlight any text, right-click, select "Save to Synapse"
+   - **For Images**: Right-click any image, select "Capture Image to Synapse"
    - You'll see a notification confirming the save
+
+2. **Using Keyboard Shortcut (Recommended)**
+   - Highlight any text on a webpage
+   - Press **Ctrl+Shift+S** (or Cmd+Shift+S on Mac)
+   - Instant save with notification
+
+3. **Using Quick Notes Panel**
+   - Press **Ctrl+Shift+N** (or Cmd+Shift+N on Mac)
+   - Opens a dedicated note-taking window
+   - Write notes quickly without leaving your browsing context
+   - Use Ctrl+Enter to save within the panel
 
 ### Using the Popup Interface
 

@@ -137,6 +137,13 @@ function createMemoryCard(memory) {
       <h3 class="memory-title">${escapeHtml(memory.title)}</h3>
       <button class="btn btn-danger" data-id="${memory._id}">Delete</button>
     </div>
+    ${
+      memory.imagePath || memory.imageData
+        ? `<div class="memory-image-container">
+            <img src="${memory.imagePath ? 'http://localhost:5000' + memory.imagePath : memory.imageData}" alt="${escapeHtml(memory.title)}" class="memory-image">
+          </div>`
+        : ''
+    }
     <p class="memory-text ${isLongText ? 'collapsed' : ''}" id="${textId}">
       ${escapeHtml(memory.text)}
     </p>

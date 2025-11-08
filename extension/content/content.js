@@ -20,12 +20,54 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       },
       (response) => {
         if (response && response.success) {
-          showNotification('Memory saved successfully!', 'success');
+          const message = response.data.offline
+            ? 'Memory saved offline (will sync when online)'
+            : 'Memory saved successfully!';
+          showNotification(message, 'success');
         } else {
           showNotification('Failed to save memory', 'error');
         }
       }
     );
+  }
+
+  if (request.action === 'saveCurrentSelection') {
+    const selectedText = window.getSelection().toString().trim();
+
+    if (!selectedText) {
+      showNotification('Please select some text first', 'error');
+      return;
+    }
+
+    const memoryData = {
+      text: selectedText,
+      url: window.location.href,
+      title: document.title,
+      context: '',
+      tags: [],
+    };
+
+    chrome.runtime.sendMessage(
+      {
+        action: 'saveMemory',
+        data: memoryData,
+      },
+      (response) => {
+        if (response && response.success) {
+          const message = response.data.offline
+            ? 'Memory saved offline (will sync when online)'
+            : 'Memory saved with keyboard shortcut!';
+          showNotification(message, 'success');
+        } else {
+          showNotification('Failed to save memory', 'error');
+        }
+      }
+    );
+  }
+
+  if (request.action === 'saveImage') {
+    // Convert image to base64 and save
+    captureImageAsBase64(request.imageUrl, request.pageUrl, request.pageTitle);
   }
 });
 
@@ -69,5 +111,343 @@ function showNotification(message, type = 'success') {
     }, 300);
   }, 3000);
 }
+
+// Capture image as base64 data URL
+async function captureImageAsBase64(imageUrl, pageUrl, pageTitle) {
+  try {
+    showNotification('Capturing image...', 'success');
+
+    // Fetch the image
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = function() {
+      const base64data = reader.result;
+
+      // Get image dimensions and other info
+      const img = new Image();
+      img.onload = function() {
+        const memoryData = {
+          text: `Image captured from: ${pageTitle}`,
+          url: pageUrl, // Store page URL, not image URL
+          title: `Image from ${new URL(pageUrl).hostname}`,
+          context: `Original URL: ${imageUrl}\nDimensions: ${img.width}x${img.height}`,
+          tags: ['image', 'screenshot'],
+          imageData: base64data, // Store the actual image as base64
+        };
+
+        chrome.runtime.sendMessage(
+          {
+            action: 'saveMemory',
+            data: memoryData,
+          },
+          (response) => {
+            if (response && response.success) {
+              showNotification('Image captured and saved!', 'success');
+            } else {
+              showNotification('Failed to save image', 'error');
+            }
+          }
+        );
+      };
+      img.src = base64data;
+    };
+    reader.onerror = function() {
+      showNotification('Failed to process image', 'error');
+    };
+    reader.readAsDataURL(blob);
+  } catch (error) {
+    console.error('Error capturing image:', error);
+
+    // Fallback: Save just the reference if fetch fails (CORS issues, etc.)
+    const memoryData = {
+      text: `Image from: ${pageTitle}`,
+      url: imageUrl, // Keep the original URL as fallback
+      title: 'Image Reference',
+      context: `Source page: ${pageUrl}\nNote: Could not capture image data directly (may be protected). URL saved as reference.`,
+      tags: ['image', 'reference'],
+    };
+
+    chrome.runtime.sendMessage(
+      {
+        action: 'saveMemory',
+        data: memoryData,
+      },
+      (response) => {
+        if (response && response.success) {
+          showNotification('Image reference saved (direct capture failed)', 'success');
+        } else {
+          showNotification('Failed to save image', 'error');
+        }
+      }
+    );
+  }
+}
+
+// ============================================
+// CONTEXT-AWARE BROWSING
+// ============================================
+
+let relatedMemories = [];
+let floatingIcon = null;
+let memoryPanel = null;
+let memoryModal = null;
+
+// Check for related memories when page loads
+function checkForRelatedMemories() {
+  const currentUrl = window.location.href;
+
+  // Ask background script to fetch related memories
+  chrome.runtime.sendMessage(
+    {
+      action: 'getRelatedMemories',
+      url: currentUrl,
+    },
+    (response) => {
+      if (response && response.success && response.data.length > 0) {
+        relatedMemories = response.data;
+        showFloatingIcon();
+      }
+    }
+  );
+}
+
+// Create and show floating Synapse icon
+function showFloatingIcon() {
+  // Don't create if already exists
+  if (floatingIcon) {
+    floatingIcon.style.display = 'flex';
+    return;
+  }
+
+  floatingIcon = document.createElement('div');
+  floatingIcon.id = 'synapse-floating-icon';
+  floatingIcon.className = 'synapse-floating-icon';
+  floatingIcon.innerHTML = `
+    <div class="synapse-icon-content">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+      <span class="synapse-badge">${relatedMemories.length}</span>
+    </div>
+  `;
+
+  floatingIcon.title = `${relatedMemories.length} saved ${relatedMemories.length === 1 ? 'memory' : 'memories'} from this site`;
+
+  floatingIcon.addEventListener('click', toggleMemoryPanel);
+  document.body.appendChild(floatingIcon);
+
+  // Animate in
+  setTimeout(() => {
+    floatingIcon.classList.add('synapse-icon-visible');
+  }, 100);
+}
+
+// Toggle memory panel
+function toggleMemoryPanel() {
+  if (memoryPanel && memoryPanel.classList.contains('synapse-panel-visible')) {
+    hideMemoryPanel();
+  } else {
+    showMemoryPanel();
+  }
+}
+
+// Show memory panel with related memories
+function showMemoryPanel() {
+  // Remove existing panel if any
+  if (memoryPanel) {
+    memoryPanel.remove();
+  }
+
+  memoryPanel = document.createElement('div');
+  memoryPanel.id = 'synapse-memory-panel';
+  memoryPanel.className = 'synapse-memory-panel';
+
+  memoryPanel.innerHTML = `
+    <div class="synapse-panel-header">
+      <h3>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+          <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+        </svg>
+        Saved Memories (${relatedMemories.length})
+      </h3>
+      <button class="synapse-panel-close" id="synapse-close-panel">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+    <div class="synapse-panel-content" id="synapse-panel-content">
+      ${renderMemoryList()}
+    </div>
+  `;
+
+  document.body.appendChild(memoryPanel);
+
+  // Event listeners
+  document.getElementById('synapse-close-panel').addEventListener('click', hideMemoryPanel);
+
+  // Add click listeners to memory cards
+  memoryPanel.querySelectorAll('.synapse-memory-item').forEach((item, index) => {
+    item.addEventListener('click', () => showMemoryDetail(relatedMemories[index]));
+  });
+
+  // Animate in
+  setTimeout(() => {
+    memoryPanel.classList.add('synapse-panel-visible');
+  }, 10);
+}
+
+// Hide memory panel
+function hideMemoryPanel() {
+  if (memoryPanel) {
+    memoryPanel.classList.remove('synapse-panel-visible');
+    setTimeout(() => {
+      if (memoryPanel) {
+        memoryPanel.remove();
+        memoryPanel = null;
+      }
+    }, 300);
+  }
+}
+
+// Render memory list
+function renderMemoryList() {
+  return relatedMemories.map((memory, index) => {
+    const date = new Date(memory.createdAt);
+    const dateStr = formatDate(date);
+    const preview = memory.text.length > 100 ? memory.text.substring(0, 100) + '...' : memory.text;
+
+    return `
+      <div class="synapse-memory-item" data-index="${index}">
+        ${memory.imagePath ? `
+          <div class="synapse-memory-image">
+            <img src="http://localhost:5000${memory.imagePath}" alt="${escapeHtml(memory.title)}">
+          </div>
+        ` : ''}
+        <div class="synapse-memory-info">
+          <h4>${escapeHtml(memory.title)}</h4>
+          <p class="synapse-memory-preview">${escapeHtml(preview)}</p>
+          <div class="synapse-memory-meta">
+            ${memory.tags && memory.tags.length > 0 ? `
+              <div class="synapse-memory-tags">
+                ${memory.tags.slice(0, 3).map(tag => `<span class="synapse-tag">${escapeHtml(tag)}</span>`).join('')}
+              </div>
+            ` : ''}
+            <span class="synapse-memory-date">${dateStr}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Show memory detail modal
+function showMemoryDetail(memory) {
+  // Remove existing modal if any
+  if (memoryModal) {
+    memoryModal.remove();
+  }
+
+  memoryModal = document.createElement('div');
+  memoryModal.id = 'synapse-memory-modal';
+  memoryModal.className = 'synapse-memory-modal';
+
+  const date = new Date(memory.createdAt);
+  const dateStr = formatDate(date);
+
+  memoryModal.innerHTML = `
+    <div class="synapse-modal-overlay"></div>
+    <div class="synapse-modal-content">
+      <div class="synapse-modal-header">
+        <h3>${escapeHtml(memory.title)}</h3>
+        <button class="synapse-modal-close" id="synapse-close-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="24" height="24">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+      <div class="synapse-modal-body">
+        ${memory.imagePath ? `
+          <div class="synapse-modal-image">
+            <img src="http://localhost:5000${memory.imagePath}" alt="${escapeHtml(memory.title)}">
+          </div>
+        ` : ''}
+        <div class="synapse-modal-text">
+          ${escapeHtml(memory.text)}
+        </div>
+        ${memory.metadata?.context ? `
+          <div class="synapse-modal-context">
+            <strong>Context:</strong> ${escapeHtml(memory.metadata.context)}
+          </div>
+        ` : ''}
+        ${memory.tags && memory.tags.length > 0 ? `
+          <div class="synapse-modal-tags">
+            ${memory.tags.map(tag => `<span class="synapse-tag">${escapeHtml(tag)}</span>`).join('')}
+          </div>
+        ` : ''}
+        <div class="synapse-modal-meta">
+          <span>Saved on ${dateStr}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(memoryModal);
+
+  // Event listeners
+  document.getElementById('synapse-close-modal').addEventListener('click', hideMemoryModal);
+  memoryModal.querySelector('.synapse-modal-overlay').addEventListener('click', hideMemoryModal);
+
+  // Animate in
+  setTimeout(() => {
+    memoryModal.classList.add('synapse-modal-visible');
+  }, 10);
+}
+
+// Hide memory modal
+function hideMemoryModal() {
+  if (memoryModal) {
+    memoryModal.classList.remove('synapse-modal-visible');
+    setTimeout(() => {
+      if (memoryModal) {
+        memoryModal.remove();
+        memoryModal = null;
+      }
+    }, 300);
+  }
+}
+
+// Format date
+function formatDate(date) {
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return date.toLocaleDateString(undefined, options);
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Initialize context-aware browsing
+setTimeout(() => {
+  checkForRelatedMemories();
+}, 1000); // Wait 1 second after page load
 
 console.log('Project Synapse content script loaded');

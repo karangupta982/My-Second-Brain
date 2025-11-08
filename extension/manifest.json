@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Project Synapse",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Your Second Brain - Capture, store, and rediscover information intelligently",
   "permissions": [
     "activeTab",
@@ -9,7 +9,8 @@
     "storage"
   ],
   "host_permissions": [
-    "http://localhost:5000/*"
+    "http://localhost:5000/*",
+    "https://*/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
@@ -19,6 +20,7 @@
       "128": "icons/icon128.png"
     }
   },
+  "options_page": "options/options.html",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -33,5 +35,21 @@
       "js": ["content/content.js"],
       "css": ["content/content.css"]
     }
-  ]
+  ],
+  "commands": {
+    "save-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Save selected text to Synapse"
+    },
+    "open-quick-notes": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+N",
+        "mac": "Command+Shift+N"
+      },
+      "description": "Open quick notes panel"
+    }
+  }
 }
