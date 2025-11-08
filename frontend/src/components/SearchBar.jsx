@@ -23,7 +23,7 @@ const SearchBar = ({ onSearch, onClear }) => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your memories..."
+            placeholder="Try: 'articles about AI from last month' or 'Python tutorials'"
             className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {query && (

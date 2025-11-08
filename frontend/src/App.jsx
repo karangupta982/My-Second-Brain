@@ -3,7 +3,7 @@ import './App.css';
 import MemoryCard from './components/MemoryCard';
 import MemoryForm from './components/MemoryForm';
 import SearchBar from './components/SearchBar';
-import { getAllMemories, saveMemory, searchMemories, deleteMemory } from './services/api';
+import { getAllMemories, saveMemory, semanticSearch, deleteMemory } from './services/api';
 
 function App() {
   const [memories, setMemories] = useState([]);
@@ -48,9 +48,15 @@ function App() {
     try {
       setLoading(true);
       setError(null);
-      const response = await searchMemories(query);
+      // Use semantic search with auto method selection
+      const response = await semanticSearch(query, 'auto');
       setMemories(response.data);
       setIsSearching(true);
+
+      // Log search info
+      if (response.searchType) {
+        console.log(`Search type: ${response.searchType}, Method: ${response.embeddingMethod}`);
+      }
     } catch (err) {
       setError('Failed to search memories. Please try again.');
       console.error(err);

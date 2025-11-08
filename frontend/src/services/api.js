@@ -41,7 +41,7 @@ export const getAllMemories = async () => {
   }
 };
 
-// Search memories
+// Search memories (keyword search - legacy)
 export const searchMemories = async (query) => {
   try {
     const response = await fetch(
@@ -56,6 +56,34 @@ export const searchMemories = async (query) => {
     return data;
   } catch (error) {
     console.error('Error searching memories:', error);
+    throw error;
+  }
+};
+
+// Semantic search (natural language, with embeddings)
+export const semanticSearch = async (query, searchMethod = 'auto') => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/memories/semantic-search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        searchMethod,
+        useHybrid: false,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to perform semantic search');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in semantic search:', error);
     throw error;
   }
 };
