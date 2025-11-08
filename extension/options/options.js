@@ -6,7 +6,9 @@ const DEFAULT_SETTINGS = {
   enableNotifications: true,
   enableOffline: true,
   autoTagging: true,
-  theme: 'light'
+  theme: 'light',
+  searchMethod: 'auto',
+  openaiApiKey: ''
 };
 
 // DOM Elements
@@ -26,10 +28,25 @@ const messageDiv = document.getElementById('message');
 const storageUsed = document.getElementById('storage-used');
 const storageText = document.getElementById('storage-text');
 
+// Semantic Search Elements
+const searchMethodSelect = document.getElementById('search-method');
+const openaiApiKeyInput = document.getElementById('openai-api-key');
+const testOpenaiKeyBtn = document.getElementById('test-openai-key-btn');
+const refreshStatsBtn = document.getElementById('refresh-stats-btn');
+const generateEmbeddingsLocalBtn = document.getElementById('generate-embeddings-local-btn');
+const generateEmbeddingsOpenaiBtn = document.getElementById('generate-embeddings-openai-btn');
+const totalMemoriesSpan = document.getElementById('total-memories');
+const memoriesWithEmbeddingsSpan = document.getElementById('memories-with-embeddings');
+const embeddingCoverageSpan = document.getElementById('embedding-coverage');
+const embeddingProgress = document.getElementById('embedding-progress');
+const embeddingProgressFill = document.getElementById('embedding-progress-fill');
+const embeddingProgressText = document.getElementById('embedding-progress-text');
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   updateStorageInfo();
+  refreshEmbeddingStats();
   setupEventListeners();
 });
 
@@ -42,6 +59,12 @@ function setupEventListeners() {
   importFile.addEventListener('change', importData);
   syncBtn.addEventListener('click', syncOfflineData);
   clearCacheBtn.addEventListener('click', clearCache);
+
+  // Semantic Search Listeners
+  testOpenaiKeyBtn.addEventListener('click', testOpenAIKey);
+  refreshStatsBtn.addEventListener('click', refreshEmbeddingStats);
+  generateEmbeddingsLocalBtn.addEventListener('click', () => generateEmbeddings('local'));
+  generateEmbeddingsOpenaiBtn.addEventListener('click', () => generateEmbeddings('openai'));
 }
 
 // Load settings from storage
@@ -54,6 +77,8 @@ function loadSettings() {
     enableOfflineCheckbox.checked = settings.enableOffline;
     autoTaggingCheckbox.checked = settings.autoTagging;
     themeSelect.value = settings.theme;
+    searchMethodSelect.value = settings.searchMethod || 'auto';
+    openaiApiKeyInput.value = settings.openaiApiKey || '';
 
     applyTheme(settings.theme);
   });
@@ -66,10 +91,12 @@ function saveSettings() {
     enableNotifications: enableNotificationsCheckbox.checked,
     enableOffline: enableOfflineCheckbox.checked,
     autoTagging: autoTaggingCheckbox.checked,
-    theme: themeSelect.value
+    theme: themeSelect.value,
+    searchMethod: searchMethodSelect.value,
+    openaiApiKey: openaiApiKeyInput.value.trim()
   };
 
-  chrome.storage.sync.set({ settings }, () => {
+  chrome.storage.sync.set({ settings }, async () => {
     showMessage('Settings saved successfully!', 'success');
     applyTheme(settings.theme);
 
@@ -78,6 +105,23 @@ function saveSettings() {
       action: 'settingsUpdated',
       settings
     });
+
+    // If OpenAI API key was provided, configure it on backend
+    if (settings.openaiApiKey) {
+      try {
+        const response = await fetch(`${settings.apiUrl}/memories/search-settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ openaiApiKey: settings.openaiApiKey })
+        });
+
+        if (response.ok) {
+          console.log('OpenAI API key configured successfully');
+        }
+      } catch (error) {
+        console.error('Failed to configure OpenAI key:', error);
+      }
+    }
   });
 }
 
@@ -313,4 +357,120 @@ function showMessage(text, type = 'success') {
   setTimeout(() => {
     messageDiv.classList.add('hidden');
   }, 5000);
+}
+
+// ============================================
+// SEMANTIC SEARCH FUNCTIONS
+// ============================================
+
+// Test OpenAI API Key
+async function testOpenAIKey() {
+  const apiKey = openaiApiKeyInput.value.trim();
+
+  if (!apiKey) {
+    showMessage('Please enter an API key first', 'error');
+    return;
+  }
+
+  testOpenaiKeyBtn.disabled = true;
+  testOpenaiKeyBtn.textContent = 'Testing...';
+
+  try {
+    const apiUrl = apiUrlInput.value.trim() || DEFAULT_SETTINGS.apiUrl;
+    const response = await fetch(`${apiUrl}/memories/search-settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ openaiApiKey: apiKey })
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.openaiConfigured) {
+      showMessage('API key is valid!', 'success');
+    } else {
+      showMessage('Invalid API key', 'error');
+    }
+  } catch (error) {
+    showMessage('Failed to test API key: ' + error.message, 'error');
+  } finally {
+    testOpenaiKeyBtn.disabled = false;
+    testOpenaiKeyBtn.textContent = 'Test API Key';
+  }
+}
+
+// Refresh Embedding Statistics
+async function refreshEmbeddingStats() {
+  try {
+    const apiUrl = apiUrlInput.value.trim() || DEFAULT_SETTINGS.apiUrl;
+    const response = await fetch(`${apiUrl}/memories/embedding-stats`);
+    const data = await response.json();
+
+    if (data.success) {
+      const stats = data.data;
+      totalMemoriesSpan.textContent = stats.totalMemories;
+      memoriesWithEmbeddingsSpan.textContent = stats.memoriesWithEmbeddings;
+      embeddingCoverageSpan.textContent = `${stats.coverage}%`;
+    } else {
+      totalMemoriesSpan.textContent = '-';
+      memoriesWithEmbeddingsSpan.textContent = '-';
+      embeddingCoverageSpan.textContent = '-';
+    }
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+    totalMemoriesSpan.textContent = '-';
+    memoriesWithEmbeddingsSpan.textContent = '-';
+    embeddingCoverageSpan.textContent = '-';
+  }
+}
+
+// Generate Embeddings
+async function generateEmbeddings(method) {
+  if (!confirm(`Generate embeddings using ${method} method? This may take a few minutes.`)) {
+    return;
+  }
+
+  // Disable buttons
+  generateEmbeddingsLocalBtn.disabled = true;
+  generateEmbeddingsOpenaiBtn.disabled = true;
+
+  // Show progress
+  embeddingProgress.classList.remove('hidden');
+  embeddingProgressFill.style.width = '0%';
+  embeddingProgressText.textContent = 'Starting...';
+
+  try {
+    const apiUrl = apiUrlInput.value.trim() || DEFAULT_SETTINGS.apiUrl;
+    const response = await fetch(`${apiUrl}/memories/generate-embeddings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      embeddingProgressFill.style.width = '100%';
+      embeddingProgressText.textContent = `Complete! Processed ${data.processed} memories`;
+
+      showMessage(
+        `Generated ${data.processed} embeddings using ${data.method} method`,
+        'success'
+      );
+
+      // Refresh stats
+      setTimeout(() => {
+        refreshEmbeddingStats();
+        embeddingProgress.classList.add('hidden');
+      }, 2000);
+    } else {
+      throw new Error(data.message || 'Failed to generate embeddings');
+    }
+  } catch (error) {
+    showMessage('Error: ' + error.message, 'error');
+    embeddingProgress.classList.add('hidden');
+  } finally {
+    // Re-enable buttons
+    generateEmbeddingsLocalBtn.disabled = false;
+    generateEmbeddingsOpenaiBtn.disabled = false;
+  }
 }

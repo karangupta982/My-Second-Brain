@@ -146,6 +146,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
     return true;
   }
+
+  if (request.action === 'semanticSearch') {
+    semanticSearch(request.query, request.searchMethod)
+      .then((response) => {
+        sendResponse({ success: true, data: response });
+      })
+      .catch((error) => {
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
+  }
 });
 
 // API Functions
@@ -212,6 +223,28 @@ async function getMemoriesByUrl(url) {
 
   if (!response.ok) {
     throw new Error(data.message || 'Failed to get memories by URL');
+  }
+
+  return data;
+}
+
+async function semanticSearch(query, searchMethod = 'auto') {
+  const response = await fetch(`${API_BASE_URL}/memories/semantic-search`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      searchMethod,
+      useHybrid: false,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to perform semantic search');
   }
 
   return data;

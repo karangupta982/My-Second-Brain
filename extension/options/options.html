@@ -71,6 +71,89 @@
         </div>
       </section>
 
+      <!-- Semantic Search -->
+      <section class="section">
+        <h2>🔍 Semantic Search (Phase 3)</h2>
+
+        <div class="setting-group">
+          <label for="search-method">Search Method</label>
+          <select id="search-method" class="input">
+            <option value="auto">Auto (Best Available)</option>
+            <option value="local">Local Semantic (Free)</option>
+            <option value="openai">OpenAI Semantic (Best Quality)</option>
+            <option value="keyword">Keyword Search (Fallback)</option>
+          </select>
+          <p class="help-text">
+            <strong>Local:</strong> Free, runs on your machine (384-dim)<br>
+            <strong>OpenAI:</strong> Best quality, requires API key (1536-dim)<br>
+            <strong>Keyword:</strong> Basic text search (no embeddings)
+          </p>
+        </div>
+
+        <div class="setting-group">
+          <label for="openai-api-key">OpenAI API Key (Optional)</label>
+          <input
+            type="password"
+            id="openai-api-key"
+            placeholder="sk-..."
+            class="input"
+          >
+          <p class="help-text">
+            Get free $5 credits at <a href="https://platform.openai.com/signup" target="_blank">platform.openai.com</a><br>
+            Cost: ~$0.000004 per memory (1000 memories = half a cent!)
+          </p>
+          <button id="test-openai-key-btn" class="btn btn-secondary btn-small">Test API Key</button>
+        </div>
+
+        <div class="setting-group">
+          <label>Embedding Statistics</label>
+          <div class="stats-container">
+            <div class="stat-item">
+              <span class="stat-value" id="total-memories">-</span>
+              <span class="stat-label">Total Memories</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="memories-with-embeddings">-</span>
+              <span class="stat-label">With Embeddings</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="embedding-coverage">-</span>
+              <span class="stat-label">Coverage</span>
+            </div>
+          </div>
+          <button id="refresh-stats-btn" class="btn btn-secondary btn-small">Refresh Stats</button>
+        </div>
+
+        <div class="setting-group">
+          <label>Generate Embeddings for Existing Memories</label>
+          <p class="help-text">
+            Generate semantic embeddings for memories that don't have them yet.
+            This enables semantic search for older memories.
+          </p>
+          <div class="button-group">
+            <button id="generate-embeddings-local-btn" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+              </svg>
+              Generate (Local - Free)
+            </button>
+            <button id="generate-embeddings-openai-btn" class="btn btn-secondary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13 7H7v6h6V7z" />
+                <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
+              </svg>
+              Generate (OpenAI)
+            </button>
+          </div>
+          <div id="embedding-progress" class="progress-container hidden">
+            <div class="progress-bar">
+              <div id="embedding-progress-fill" class="progress-bar-fill"></div>
+            </div>
+            <p id="embedding-progress-text" class="help-text">Processing...</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Keyboard Shortcuts -->
       <section class="section">
         <h2>⌨️ Keyboard Shortcuts</h2>

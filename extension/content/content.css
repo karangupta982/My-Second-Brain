@@ -389,3 +389,127 @@
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
+
+/* ============================================
+   SAVE MODAL FORM STYLES
+   ============================================ */
+
+.synapse-save-form {
+  width: 100%;
+}
+
+.synapse-form-group {
+  margin-bottom: 16px;
+}
+
+.synapse-form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.synapse-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.synapse-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.synapse-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #111827;
+  transition: all 0.2s;
+  resize: vertical;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.synapse-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.synapse-form-meta {
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.synapse-form-meta small {
+  font-size: 12px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.synapse-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.synapse-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.synapse-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.synapse-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.synapse-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+.synapse-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.synapse-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.synapse-btn-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+}

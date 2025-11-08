@@ -4,31 +4,12 @@
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'saveSelection') {
-    const memoryData = {
+    // Show save modal instead of immediately saving
+    showSaveModal({
       text: request.text,
       url: request.url,
       title: request.title,
-      context: '', // User can add context later if needed
-      tags: [],
-    };
-
-    // Send to background script to save
-    chrome.runtime.sendMessage(
-      {
-        action: 'saveMemory',
-        data: memoryData,
-      },
-      (response) => {
-        if (response && response.success) {
-          const message = response.data.offline
-            ? 'Memory saved offline (will sync when online)'
-            : 'Memory saved successfully!';
-          showNotification(message, 'success');
-        } else {
-          showNotification('Failed to save memory', 'error');
-        }
-      }
-    );
+    });
   }
 
   if (request.action === 'saveCurrentSelection') {
@@ -39,30 +20,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return;
     }
 
-    const memoryData = {
+    // Show save modal with the selected text
+    showSaveModal({
       text: selectedText,
       url: window.location.href,
       title: document.title,
-      context: '',
-      tags: [],
-    };
-
-    chrome.runtime.sendMessage(
-      {
-        action: 'saveMemory',
-        data: memoryData,
-      },
-      (response) => {
-        if (response && response.success) {
-          const message = response.data.offline
-            ? 'Memory saved offline (will sync when online)'
-            : 'Memory saved with keyboard shortcut!';
-          showNotification(message, 'success');
-        } else {
-          showNotification('Failed to save memory', 'error');
-        }
-      }
-    );
+    });
   }
 
   if (request.action === 'saveImage') {
@@ -419,6 +382,191 @@ function hideMemoryModal() {
       }
     }, 300);
   }
+}
+
+// ============================================
+// SAVE MODAL
+// ============================================
+
+let saveModal = null;
+
+// Show save modal for new memory
+function showSaveModal(data) {
+  // Remove existing modal if any
+  if (saveModal) {
+    saveModal.remove();
+  }
+
+  saveModal = document.createElement('div');
+  saveModal.id = 'synapse-save-modal';
+  saveModal.className = 'synapse-memory-modal';
+
+  const textPreview = data.text.length > 200 ? data.text.substring(0, 200) + '...' : data.text;
+
+  saveModal.innerHTML = `
+    <div class="synapse-modal-overlay"></div>
+    <div class="synapse-modal-content">
+      <div class="synapse-modal-header">
+        <h3>Save to Synapse</h3>
+        <button class="synapse-modal-close" id="synapse-close-save-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="24" height="24">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+      <div class="synapse-modal-body">
+        <div class="synapse-save-form">
+          <div class="synapse-form-group">
+            <label for="synapse-save-title">Title</label>
+            <input
+              type="text"
+              id="synapse-save-title"
+              class="synapse-input"
+              value="${escapeHtml(data.title)}"
+              placeholder="Enter a title..."
+            />
+          </div>
+
+          <div class="synapse-form-group">
+            <label for="synapse-save-text">Selected Text</label>
+            <textarea
+              id="synapse-save-text"
+              class="synapse-textarea"
+              rows="6"
+              placeholder="Your selected text..."
+            >${escapeHtml(data.text)}</textarea>
+          </div>
+
+          <div class="synapse-form-group">
+            <label for="synapse-save-context">Notes (Optional)</label>
+            <textarea
+              id="synapse-save-context"
+              class="synapse-textarea"
+              rows="3"
+              placeholder="Add any additional notes or context..."
+            ></textarea>
+          </div>
+
+          <div class="synapse-form-group">
+            <label for="synapse-save-tags">Tags (Optional)</label>
+            <input
+              type="text"
+              id="synapse-save-tags"
+              class="synapse-input"
+              placeholder="Separate tags with commas (e.g., javascript, tutorial, react)"
+            />
+          </div>
+
+          <div class="synapse-form-meta">
+            <small>Source: ${escapeHtml(data.url)}</small>
+          </div>
+
+          <div class="synapse-form-actions">
+            <button class="synapse-btn synapse-btn-secondary" id="synapse-cancel-save">
+              Cancel
+            </button>
+            <button class="synapse-btn synapse-btn-primary" id="synapse-confirm-save">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              Save Memory
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(saveModal);
+
+  // Store the original data
+  saveModal.dataset.url = data.url;
+
+  // Event listeners
+  document.getElementById('synapse-close-save-modal').addEventListener('click', hideSaveModal);
+  document.getElementById('synapse-cancel-save').addEventListener('click', hideSaveModal);
+  saveModal.querySelector('.synapse-modal-overlay').addEventListener('click', hideSaveModal);
+  document.getElementById('synapse-confirm-save').addEventListener('click', handleSaveConfirm);
+
+  // Focus on title input
+  setTimeout(() => {
+    document.getElementById('synapse-save-title').focus();
+    document.getElementById('synapse-save-title').select();
+  }, 100);
+
+  // Animate in
+  setTimeout(() => {
+    saveModal.classList.add('synapse-modal-visible');
+  }, 10);
+}
+
+// Hide save modal
+function hideSaveModal() {
+  if (saveModal) {
+    saveModal.classList.remove('synapse-modal-visible');
+    setTimeout(() => {
+      if (saveModal) {
+        saveModal.remove();
+        saveModal = null;
+      }
+    }, 300);
+  }
+}
+
+// Handle save confirmation
+function handleSaveConfirm() {
+  const title = document.getElementById('synapse-save-title').value.trim();
+  const text = document.getElementById('synapse-save-text').value.trim();
+  const context = document.getElementById('synapse-save-context').value.trim();
+  const tagsInput = document.getElementById('synapse-save-tags').value.trim();
+  const url = saveModal.dataset.url;
+
+  // Validate
+  if (!title || !text) {
+    showNotification('Please enter both title and text', 'error');
+    return;
+  }
+
+  // Parse tags
+  const tags = tagsInput
+    ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    : [];
+
+  // Create memory data
+  const memoryData = {
+    title,
+    text,
+    url,
+    context,
+    tags,
+  };
+
+  // Disable save button and show loading
+  const saveBtn = document.getElementById('synapse-confirm-save');
+  const originalHTML = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = 'Saving...';
+
+  // Send to background script to save
+  chrome.runtime.sendMessage(
+    {
+      action: 'saveMemory',
+      data: memoryData,
+    },
+    (response) => {
+      if (response && response.success) {
+        const message = response.data.offline
+          ? 'Memory saved offline (will sync when online)'
+          : 'Memory saved successfully!';
+        showNotification(message, 'success');
+        hideSaveModal();
+      } else {
+        showNotification('Failed to save memory', 'error');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHTML;
+      }
+    }
+  );
 }
 
 // Format date

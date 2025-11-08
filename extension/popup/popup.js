@@ -75,21 +75,32 @@ function handleSearch() {
   showLoading(true);
   hideError();
 
-  chrome.runtime.sendMessage(
-    { action: 'searchMemories', query },
-    (response) => {
-      showLoading(false);
+  // Get search method from settings
+  chrome.storage.sync.get(['settings'], (result) => {
+    const searchMethod = result.settings?.searchMethod || 'auto';
 
-      if (response && response.success) {
-        allMemories = response.data.data || [];
-        displayMemories(allMemories);
-        isSearching = true;
-        clearSearchBtn.classList.remove('hidden');
-      } else {
-        showError('Search failed. Please try again.');
+    // Use semantic search
+    chrome.runtime.sendMessage(
+      { action: 'semanticSearch', query, searchMethod },
+      (response) => {
+        showLoading(false);
+
+        if (response && response.success) {
+          allMemories = response.data.data || [];
+          displayMemories(allMemories);
+          isSearching = true;
+          clearSearchBtn.classList.remove('hidden');
+
+          // Show search info
+          if (response.data.searchType) {
+            console.log(`Search type: ${response.data.searchType}, Method: ${response.data.embeddingMethod}`);
+          }
+        } else {
+          showError('Search failed. Please try again.');
+        }
       }
-    }
-  );
+    );
+  });
 }
 
 // Clear search
@@ -135,7 +146,10 @@ function createMemoryCard(memory) {
   card.innerHTML = `
     <div class="memory-header">
       <h3 class="memory-title">${escapeHtml(memory.title)}</h3>
-      <button class="btn btn-danger" data-id="${memory._id}">Delete</button>
+      <div class="memory-header-actions">
+        ${memory.similarity ? `<span class="similarity-badge">${Math.round(memory.similarity * 100)}%</span>` : ''}
+        <button class="btn btn-danger" data-id="${memory._id}">Delete</button>
+      </div>
     </div>
     ${
       memory.imagePath || memory.imageData
