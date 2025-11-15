@@ -410,9 +410,9 @@ Fully implemented across:
 
 #### **Documentation:**
 
-* 📘 `SEMANTIC-SEARCH-COMPLETE.md` - User guide with examples
-* 🛠️ `SEMANTIC-SEARCH-SETUP.md` - Technical setup guide
-* 🧪 `TESTING-SEMANTIC-SEARCH.md` - Complete testing guide
+* `SEMANTIC-SEARCH-COMPLETE.md` - User guide with examples
+* `SEMANTIC-SEARCH-SETUP.md` - Technical setup guide
+* `TESTING-SEMANTIC-SEARCH.md` - Complete testing guide
 
 ---
 
@@ -442,7 +442,7 @@ Fully implemented across:
    - Search: "artificial intelligence tutorials"
    - Should find your memory with 80-90% similarity!
 
-**Why it works:** Even though you searched "artificial intelligence" and saved "machine learning", semantic search understands they're related! 🎉
+**Why it works:** Even though you searched "artificial intelligence" and saved "machine learning", semantic search understands they're related!
 
 ### **Verify Embeddings:**
 
@@ -490,7 +490,7 @@ See `TESTING-SEMANTIC-SEARCH.md` for 10 comprehensive test scenarios including:
 **Fix:**
 1. Go to `chrome://extensions/`
 2. Find "Project Synapse"
-3. Click reload button 🔄
+3. Click reload button
 4. Refresh the webpage you're on
 
 ### **No search results**
