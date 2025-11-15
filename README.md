@@ -8,7 +8,9 @@ Project Synapse is a next-generation productivity tool that acts as your second 
 
 Project Synapse solves a common problem: forgetting useful information that we come across online. Whether it's a quote, an article snippet, a research insight, or a to-do note, we often save it somewhere and then lose track of it. Synapse provides a unified way to capture, organize, and **intelligently search** all of these thoughts using AI-powered semantic search.
 
+
 ![Project Logo](./assets/chrome%20extention.png)
+![Project Logo](./assets/store%20in%20synapse.png)
 ![Project Logo](./assets/floating%20icon.png)
 ![Project Logo](./assets/synapse%20memory.png)
 ![Project Logo](./assets/synapse%20browser%20tab.png)
